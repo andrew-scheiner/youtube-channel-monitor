@@ -1,0 +1,19 @@
+{
+  "files.associations": {
+    "*.gs": "javascript"
+  },
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "javascript.validate.enable": false,
+  "eslint.useFlatConfig": false,
+  "task.quickOpen.showAll": true,
+  "statusBar.experimental.showCommands": true
+}
