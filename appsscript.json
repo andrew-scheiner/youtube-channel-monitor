@@ -1,5 +1,19 @@
 {
   "timeZone": "Etc/UTC",
   "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  "runtimeVersion": "V8",
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "GASLibrary",
+        "libraryId": "124dIgQdSYpMXAf9J0vFewzyHG0PopddN50UQLw0d1wOZz89rZLEpkMAE",
+        "developmentMode": true
+      },
+      {
+        "userSymbol": "GASConfigLibrary",
+        "libraryId": "19mt3oek1jSRRq97idSa9vzDuYtO8o7NYAxH-3cIVwj24I_02l5CAgHY4",
+        "developmentMode": true
+      }
+    ]
+  }
 }
