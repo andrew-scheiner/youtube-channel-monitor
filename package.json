@@ -1,7 +1,7 @@
 {
-  "name": "gas-project-template",
+  "name": "youtube-channel-monitor",
   "version": "1.0.0",
-  "description": "Google Apps Script project template",
+  "description": "YouTube Channel Monitor",
   "main": "Code.js",
   "scripts": {
     "lint": "eslint . --ext .js,.gs",
