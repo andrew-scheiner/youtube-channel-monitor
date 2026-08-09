@@ -1,3 +1,9 @@
+function onOpen() {
+  createMenu();
+}
+
+
+
 function onEdit(e) {
   const range = e.range;
   const value = e.value;

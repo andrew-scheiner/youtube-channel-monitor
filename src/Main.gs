@@ -1,3 +1,30 @@
+function createMenu() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('Custom')
+    .addItem('Backup Spreadsheet', 'backupSpreadsheet')
+    //.addItem('Reset Filter', 'resetFilter')
+    .addItem('Sort Sheet','sortActiveSheet')
+    //.addItem('Reset Due Date', 'updateTaskDueDateFromFrequency')
+    /*
+    .addSeparator()
+    .addSubMenu(ui.createMenu('Actions')
+      .addItem('Clear Notes', 'clearNotes')
+      .addItem('Clear To Neutral', 'clearToNeutral')
+      .addItem('Hide Done Actions', 'hideDoneActions')
+      .addItem('Reset Status','resetStatus'))
+    .addSeparator()
+    .addSubMenu(ui.createMenu('Refresh Data Source(s)')
+      .addItem('All', 'refreshDataSources')
+      .addItem('Data Source 1', 'updateDataSource1'))
+    */  
+    .addToUi();
+}
+
+
+
+
+
+
 //Source: https://spreadsheet.dev/youtube-channel-notifications-google-apps-script
 
 //@OnlyCurrentDoc
