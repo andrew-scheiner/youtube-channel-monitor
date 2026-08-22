@@ -5,3 +5,6 @@ function setPriorityAndStatusDropdownLists() {
   //GASLibrary.setGlobalLookupDropdownList('WorkItem', 'Status', 'workItems__status',1, { invalidHandling: "reject" });
 }
 
+function importConfigItems() {
+  GASLibrary.importConfigItems();
+}
