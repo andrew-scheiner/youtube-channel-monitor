@@ -17,14 +17,27 @@ function checkForNewVideosWithOverrideDate(overrideDate) {
   const col = {};
   headers.forEach((h, i) => col[h] = i);
 
-  const channels = channelData.slice(1).map(row => ({
-    id: row[col.ID],
-    channelName: row[col.ChannelName],
-    channelId: row[col.ChannelID],
-    uploadsPlaylistId: row[col.UploadsPlaylistId],
-    lastVideoDate: overrideDate || row[col.LastVideoDate],
-    person: (row[col.Person] || 'AAS').toString().trim().toUpperCase()
-  }));
+  const channels = channelData.slice(1)
+    .map((row, index) => {
+      const statusValue = col.Status !== undefined ? row[col.Status] : '';
+      const normalizedStatus = String(statusValue ?? '').trim().toLowerCase();
+
+      if (normalizedStatus === 'ignore' || normalizedStatus === 'stopped') {
+        Logger.log(`Row ${index + 2} skipped — status: ${statusValue}`);
+        return null;
+      }
+
+      return {
+        id: row[col.ID],
+        channelName: row[col.ChannelName],
+        channelId: row[col.ChannelID],
+        uploadsPlaylistId: row[col.UploadsPlaylistId],
+        lastVideoDate: overrideDate || row[col.LastVideoDate],
+        person: (row[col.Person] || 'AAS').toString().trim().toUpperCase(),
+        status: normalizedStatus || 'active'
+      };
+    })
+    .filter(Boolean);
 
   const updatesByPerson = {};
 

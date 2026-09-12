@@ -64,6 +64,7 @@ function getEmailRoutingFromSheet() {
 // ======================================================================
 
 function checkForNewVideos() {
+
   const ss = SpreadsheetApp.getActive();
   const sheet = ss.getSheetByName('Channels');
   if (!sheet) {
@@ -80,15 +81,28 @@ function checkForNewVideos() {
   const col = {};
   headers.forEach((h, i) => col[h] = i);
 
+  const channels = channelData.slice(1)
+    .map((row, index) => {
+      const statusValue = col.Status !== undefined ? row[col.Status] : '';
+      const normalizedStatus = String(statusValue ?? '').trim().toLowerCase();
 
-  const channels = channelData.slice(1).map(row => ({
-    id: row[col.ID],
-    channelName: row[col.ChannelName],
-    channelId: row[col.ChannelID],
-    uploadsPlaylistId: row[col.UploadsPlaylistId],
-    lastVideoDate: row[col.LastVideoDate] || '2000-01-01T00:00:00Z',
-    person: (row[col.Person] || 'AAS').toString().trim().toUpperCase()
-  }));
+      if (normalizedStatus === 'ignore' || normalizedStatus === 'stopped') {
+        const channelName = row[col.ChannelName] || `Row ${index + 2}`;
+        Logger.log(`Skipping ${channelName} (row ${index + 2}) — status: ${statusValue || 'blank'}`);
+        return null;
+      }
+
+      return {
+        id: row[col.ID],
+        channelName: row[col.ChannelName],
+        channelId: row[col.ChannelID],
+        uploadsPlaylistId: row[col.UploadsPlaylistId],
+        lastVideoDate: row[col.LastVideoDate] || '2000-01-01T00:00:00Z',
+        person: (row[col.Person] || 'AAS').toString().trim().toUpperCase(),
+        status: normalizedStatus || 'active'
+      };
+    })
+    .filter(Boolean);
 
   // 🔍 DEBUG: check what ChannelIDs actually are
   channels.forEach(channel => {
@@ -107,7 +121,6 @@ function checkForNewVideos() {
         videos[0].published,
         { format: 'yyyy-MM-dd' }
       );
-
 
       if (!updatesByPerson[channel.person]) {
         updatesByPerson[channel.person] = [];
