@@ -15,16 +15,16 @@ const SORT_CONFIGS = {
     ],
     headerRows: 1
   },
-  /*
-  Actions: {
+  
+  Channels: {
     sortColumns: [
-      { column: 3, ascending: true },
-      { column: 4, ascending: true },
+      { column: 6, ascending: true },
+      { column: 7, ascending: true },
       { column: 2, ascending: true }
     ],
     headerRows: 1
   },
-  */
+  
   Sheet1: {
     sortColumns: [{ column: 3, ascending: true }]
   }
