@@ -99,7 +99,8 @@ function checkForNewVideos() {
         uploadsPlaylistId: row[col.UploadsPlaylistId],
         lastVideoDate: row[col.LastVideoDate] || '2000-01-01T00:00:00Z',
         person: (row[col.Person] || 'AAS').toString().trim().toUpperCase(),
-        status: normalizedStatus || 'active'
+        status: normalizedStatus || 'active',
+        sheetRow: index + 2 // preserve original row since filter(Boolean) below shifts array indexes
       };
     })
     .filter(Boolean);
@@ -111,13 +112,12 @@ function checkForNewVideos() {
 
   const updatesByPerson = {};
 
-  channels.forEach((channel, index) => {
+  channels.forEach((channel) => {
     const videos = getNewVideosForChannel(channel);
 
     if (videos && videos.length > 0) {
-      const rowIndex = index + 2;
       GASLibrary.setDateValue(
-        sheet.getRange(rowIndex, col.LastVideoDate + 1),
+        sheet.getRange(channel.sheetRow, col.LastVideoDate + 1),
         videos[0].published,
         { format: 'yyyy-MM-dd' }
       );
