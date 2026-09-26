@@ -116,6 +116,9 @@ function checkForNewVideos() {
     const videos = getNewVideosForChannel(channel);
 
     if (videos && videos.length > 0) {
+      // 🔍 DEBUG: confirm which videos/thumbnails are being emailed this run
+      Logger.log(`📧 ${channel.channelName} → ${videos.length} new video(s): ${JSON.stringify(videos.map(v => ({ title: v.title, thumbnail: v.thumbnail })))}`);
+
       GASLibrary.setDateValue(
         sheet.getRange(channel.sheetRow, col.LastVideoDate + 1),
         videos[0].published,
@@ -139,8 +142,8 @@ function checkForNewVideos() {
       return;
     }
 
-    const html = generateEmailContent(updates);
-    sendNotificationEmail(html, recipient);
+    const { html, inlineImages } = generateEmailContent(updates);
+    sendNotificationEmail(html, recipient, inlineImages);
   });
 }
 
@@ -196,12 +199,18 @@ function getNewVideosForChannel(channel) {
     return (data.items || [])
       .map(item => {
         const snippet = item.snippet;
+        const thumbnail = snippet.thumbnails?.medium?.url || '';
+
+        // 🔍 DEBUG: capture raw thumbnails payload to diagnose missing images
+        if (!thumbnail) {
+          Logger.log(`⚠️ No medium thumbnail for "${snippet.title}" (${channel.channelName}) — thumbnails: ${JSON.stringify(snippet.thumbnails)}`);
+        }
 
         return {
           title: snippet.title || '',
           link: `https://www.youtube.com/watch?v=${snippet.resourceId.videoId}`,
           published: snippet.publishedAt || '',
-          thumbnail: snippet.thumbnails?.medium?.url || ''
+          thumbnail: thumbnail
         };
       })
       .filter(video =>
@@ -238,6 +247,9 @@ function generateEmailContent(newVideosByChannel) {
   };
 
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  // embed thumbnails inline (cid) instead of remote URLs, since remote images get silently blocked by some mail clients
+  const inlineImages = {};
+  let thumbnailCounter = 0;
 
   let html = `
     <div style="${styles.container}">
@@ -251,11 +263,13 @@ function generateEmailContent(newVideosByChannel) {
     `;
 
     videos.forEach(video => {
+      const cid = video.thumbnail ? getInlineThumbnailCid(video.thumbnail, inlineImages, thumbnailCounter++) : '';
+
       html += `
         <div style="${styles.videoCard}">
           <div style="${styles.videoContainer}">
-            ${video.thumbnail ? `
-              <img src="${video.thumbnail}"
+            ${cid ? `
+              <img src="cid:${cid}"
                 alt="Video thumbnail"
                 style="${styles.thumbnail}"
               />
@@ -285,7 +299,20 @@ function generateEmailContent(newVideosByChannel) {
     </div>
   `;
 
-  return html;
+  return { html, inlineImages };
+}
+
+// fetches a thumbnail as a blob and registers it under a unique cid, falling back to no image on failure
+function getInlineThumbnailCid(thumbnailUrl, inlineImages, index) {
+  try {
+    const blob = UrlFetchApp.fetch(thumbnailUrl, { muteHttpExceptions: true }).getBlob();
+    const cid = `thumbnail_${index}`;
+    inlineImages[cid] = blob;
+    return cid;
+  } catch (error) {
+    Logger.log(`⚠️ Failed to fetch thumbnail for inline embedding (${thumbnailUrl}): ${error}`);
+    return '';
+  }
 }
 
 
@@ -296,12 +323,13 @@ function generateEmailContent(newVideosByChannel) {
 // ======================================================================
 
 
-function sendNotificationEmail(htmlContent, recipient) {
+function sendNotificationEmail(htmlContent, recipient, inlineImages) {
   const subject = 'New Videos From Your Favorite YouTube Channels 📺';
 
   MailApp.sendEmail({
     to: recipient,
     subject: subject,
-    htmlBody: htmlContent
+    htmlBody: htmlContent,
+    inlineImages: inlineImages
   });
 }

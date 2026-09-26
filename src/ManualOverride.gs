@@ -65,7 +65,7 @@ function checkForNewVideosWithOverrideDate(overrideDate) {
 
     if (!recipient) return;
 
-    const html = generateEmailContent(updates);
-    sendNotificationEmail(html, recipient);
+    const { html, inlineImages } = generateEmailContent(updates);
+    sendNotificationEmail(html, recipient, inlineImages);
   });
 }
