@@ -3,8 +3,9 @@ function createMenu() {
   ui.createMenu('Custom')
     .addItem('Backup Spreadsheet', 'backupSpreadsheet')
     //.addItem('Reset Filter', 'resetFilter')
-    .addItem('Sort Sheet','sortActiveSheet')
-    //.addItem('Reset Due Date', 'updateTaskDueDateFromFrequency')
+    .addItem('Sort Sheet', 'sortActiveSheet')
+    .addSeparator()
+    .addItem('View Config Changes', 'viewConfigChanges')
     /*
     .addSeparator()
     .addSubMenu(ui.createMenu('Actions')
@@ -16,21 +17,16 @@ function createMenu() {
     .addSubMenu(ui.createMenu('Refresh Data Source(s)')
       .addItem('All', 'refreshDataSources')
       .addItem('Data Source 1', 'updateDataSource1'))
-    */  
+    */
     .addToUi();
 }
-
-
-
-
-
 
 //Source: https://spreadsheet.dev/youtube-channel-notifications-google-apps-script
 
 //@OnlyCurrentDoc
 
 // ======================================================================
-// EMAIL ROUTING 
+// EMAIL ROUTING
 // ======================================================================
 
 function getEmailRoutingFromSheet() {
@@ -57,14 +53,11 @@ function getEmailRoutingFromSheet() {
   }, {});
 }
 
-
-
 // ======================================================================
 // MAIN FUNCTION
 // ======================================================================
 
 function checkForNewVideos() {
-
   const ss = SpreadsheetApp.getActive();
   const sheet = ss.getSheetByName('Channels');
   if (!sheet) {
@@ -75,20 +68,25 @@ function checkForNewVideos() {
   // 🔹 Load routing dynamically
   const EMAIL_ROUTING = getEmailRoutingFromSheet();
   const channelData = sheet.getDataRange().getValues();
-  const headers = channelData[0].map(h => h.toString().trim());
+  const headers = channelData[0].map((h) => h.toString().trim());
 
   // Create a lookup of column indexes by header name
   const col = {};
-  headers.forEach((h, i) => col[h] = i);
+  headers.forEach((h, i) => (col[h] = i));
 
-  const channels = channelData.slice(1)
+  const channels = channelData
+    .slice(1)
     .map((row, index) => {
       const statusValue = col.Status !== undefined ? row[col.Status] : '';
-      const normalizedStatus = String(statusValue ?? '').trim().toLowerCase();
+      const normalizedStatus = String(statusValue ?? '')
+        .trim()
+        .toLowerCase();
 
       if (normalizedStatus === 'ignore' || normalizedStatus === 'stopped') {
         const channelName = row[col.ChannelName] || `Row ${index + 2}`;
-        Logger.log(`Skipping ${channelName} (row ${index + 2}) — status: ${statusValue || 'blank'}`);
+        Logger.log(
+          `Skipping ${channelName} (row ${index + 2}) — status: ${statusValue || 'blank'}`
+        );
         return null;
       }
 
@@ -100,14 +98,16 @@ function checkForNewVideos() {
         lastVideoDate: row[col.LastVideoDate] || '2000-01-01T00:00:00Z',
         person: (row[col.Person] || 'AAS').toString().trim().toUpperCase(),
         status: normalizedStatus || 'active',
-        sheetRow: index + 2 // preserve original row since filter(Boolean) below shifts array indexes
+        sheetRow: index + 2, // preserve original row since filter(Boolean) below shifts array indexes
       };
     })
     .filter(Boolean);
 
   // 🔍 DEBUG: check what ChannelIDs actually are
-  channels.forEach(channel => {
-    Logger.log(`Channel: ${channel.channelName} | ChannelID: ${channel.channelId} | PlaylistID: ${channel.uploadsPlaylistId}`);
+  channels.forEach((channel) => {
+    Logger.log(
+      `Channel: ${channel.channelName} | ChannelID: ${channel.channelId} | PlaylistID: ${channel.uploadsPlaylistId}`
+    );
   });
 
   const updatesByPerson = {};
@@ -117,7 +117,9 @@ function checkForNewVideos() {
 
     if (videos && videos.length > 0) {
       // 🔍 DEBUG: confirm which videos/thumbnails are being emailed this run
-      Logger.log(`📧 ${channel.channelName} → ${videos.length} new video(s): ${JSON.stringify(videos.map(v => ({ title: v.title, thumbnail: v.thumbnail })))}`);
+      Logger.log(
+        `📧 ${channel.channelName} → ${videos.length} new video(s): ${JSON.stringify(videos.map((v) => ({ title: v.title, thumbnail: v.thumbnail })))}`
+      );
 
       GASLibrary.setDateValue(
         sheet.getRange(channel.sheetRow, col.LastVideoDate + 1),
@@ -147,18 +149,13 @@ function checkForNewVideos() {
   });
 }
 
-
-
-
 // ======================================================================
 // FETCH NEW VIDEOS FOR ONE CHANNEL
 // ======================================================================
 
 function getNewVideosForChannel(channel) {
   try {
-    const API_KEY = PropertiesService
-      .getScriptProperties()
-      .getProperty('YOUTUBE_API_KEY');
+    const API_KEY = PropertiesService.getScriptProperties().getProperty('YOUTUBE_API_KEY');
 
     if (!API_KEY) {
       throw new Error('Missing YOUTUBE_API_KEY in Script Properties');
@@ -177,13 +174,15 @@ function getNewVideosForChannel(channel) {
       `&maxResults=5`;
 
     const response = UrlFetchApp.fetch(url, {
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     });
 
     const responseCode = response.getResponseCode();
 
     if (responseCode !== 200) {
-      Logger.log(`⚠️ API failed for ${channel.channelName} (${channel.uploadsPlaylistId}) - HTTP ${responseCode}`);
+      Logger.log(
+        `⚠️ API failed for ${channel.channelName} (${channel.uploadsPlaylistId}) - HTTP ${responseCode}`
+      );
       Logger.log(response.getContentText());
       return [];
     }
@@ -197,29 +196,28 @@ function getNewVideosForChannel(channel) {
       : lastNotificationDate;
 
     return (data.items || [])
-      .map(item => {
+      .map((item) => {
         const snippet = item.snippet;
         const thumbnail = snippet.thumbnails?.medium?.url || '';
 
         // 🔍 DEBUG: capture raw thumbnails payload to diagnose missing images
         if (!thumbnail) {
-          Logger.log(`⚠️ No medium thumbnail for "${snippet.title}" (${channel.channelName}) — thumbnails: ${JSON.stringify(snippet.thumbnails)}`);
+          Logger.log(
+            `⚠️ No medium thumbnail for "${snippet.title}" (${channel.channelName}) — thumbnails: ${JSON.stringify(snippet.thumbnails)}`
+          );
         }
 
         return {
           title: snippet.title || '',
           link: `https://www.youtube.com/watch?v=${snippet.resourceId.videoId}`,
           published: snippet.publishedAt || '',
-          thumbnail: thumbnail
+          thumbnail: thumbnail,
         };
       })
-      .filter(video =>
-        video.title &&
-        video.published &&
-        new Date(video.published) > validLastDate
+      .filter(
+        (video) => video.title && video.published && new Date(video.published) > validLastDate
       )
       .slice(0, 3);
-
   } catch (error) {
     Logger.log(
       `❌ Error fetching videos for ${channel.channelName} (UploadsPlaylistId: ${channel.uploadsPlaylistId}): ${error}`
@@ -243,7 +241,7 @@ function generateEmailContent(newVideosByChannel) {
     thumbnail: 'width: 120px; height: 90px; margin-right: 15px; border-radius: 3px;',
     videoTitle: 'color: #167ac6; text-decoration: none; font-weight: bold; font-size: 16px;',
     publishDate: 'color: #666; margin: 5px 0; font-size: 14px;',
-    footer: 'margin-top: 30px; font-size: 14px; color: #555; text-align: center;'
+    footer: 'margin-top: 30px; font-size: 14px; color: #555; text-align: center;',
   };
 
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
@@ -262,18 +260,24 @@ function generateEmailContent(newVideosByChannel) {
         <h2 style="${styles.channelTitle}">${channel.channelName}</h2>
     `;
 
-    videos.forEach(video => {
-      const cid = video.thumbnail ? getInlineThumbnailCid(video.thumbnail, inlineImages, thumbnailCounter++) : '';
+    videos.forEach((video) => {
+      const cid = video.thumbnail
+        ? getInlineThumbnailCid(video.thumbnail, inlineImages, thumbnailCounter++)
+        : '';
 
       html += `
         <div style="${styles.videoCard}">
           <div style="${styles.videoContainer}">
-            ${cid ? `
+            ${
+              cid
+                ? `
               <img src="cid:${cid}"
                 alt="Video thumbnail"
                 style="${styles.thumbnail}"
               />
-            ` : ''}
+            `
+                : ''
+            }
             <div>
               <a href="${video.link}"
                 style="${styles.videoTitle}">
@@ -315,13 +319,9 @@ function getInlineThumbnailCid(thumbnailUrl, inlineImages, index) {
   }
 }
 
-
-
-
 // ======================================================================
 // SEND EMAIL
 // ======================================================================
-
 
 function sendNotificationEmail(htmlContent, recipient, inlineImages) {
   const subject = 'New Videos From Your Favorite YouTube Channels 📺';
@@ -330,6 +330,6 @@ function sendNotificationEmail(htmlContent, recipient, inlineImages) {
     to: recipient,
     subject: subject,
     htmlBody: htmlContent,
-    inlineImages: inlineImages
+    inlineImages: inlineImages,
   });
 }
