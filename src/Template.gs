@@ -13,3 +13,7 @@ function sortActiveSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   GASLibrary.sortSheetByConfig(ss, SORT_CONFIGS);
 }
+
+function viewConfigChanges() {
+  GASLibrary.viewConfigChanges();
+}
