@@ -1,6 +1,6 @@
 # YouTube Channel Monitor
 
-A Google Apps Script project for monitoring a YouTube channel and its uploads.
+A Google Apps Script project for monitoring YouTube channels and their uploads.
 
 ## Project files
 

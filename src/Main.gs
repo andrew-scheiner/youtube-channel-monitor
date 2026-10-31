@@ -103,24 +103,12 @@ function checkForNewVideos() {
     })
     .filter(Boolean);
 
-  // 🔍 DEBUG: check what ChannelIDs actually are
-  channels.forEach((channel) => {
-    Logger.log(
-      `Channel: ${channel.channelName} | ChannelID: ${channel.channelId} | PlaylistID: ${channel.uploadsPlaylistId}`
-    );
-  });
-
   const updatesByPerson = {};
 
   channels.forEach((channel) => {
     const videos = getNewVideosForChannel(channel);
 
     if (videos && videos.length > 0) {
-      // 🔍 DEBUG: confirm which videos/thumbnails are being emailed this run
-      Logger.log(
-        `📧 ${channel.channelName} → ${videos.length} new video(s): ${JSON.stringify(videos.map((v) => ({ title: v.title, thumbnail: v.thumbnail })))}`
-      );
-
       GASLibrary.setDateValue(
         sheet.getRange(channel.sheetRow, col.LastVideoDate + 1),
         videos[0].published,
@@ -199,13 +187,6 @@ function getNewVideosForChannel(channel) {
       .map((item) => {
         const snippet = item.snippet;
         const thumbnail = snippet.thumbnails?.medium?.url || '';
-
-        // 🔍 DEBUG: capture raw thumbnails payload to diagnose missing images
-        if (!thumbnail) {
-          Logger.log(
-            `⚠️ No medium thumbnail for "${snippet.title}" (${channel.channelName}) — thumbnails: ${JSON.stringify(snippet.thumbnails)}`
-          );
-        }
 
         return {
           title: snippet.title || '',
